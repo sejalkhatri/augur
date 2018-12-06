@@ -15,9 +15,10 @@ matrix:
       install: 
         - "pip install --process-dependency-links ."
         - "npm install newman"
-      language: python
-      python: "3.6"
-      notifications: 
+      language: node_js
+      node_js: 
+        - "8.2.1"
+      notifications:
         slack: "augurlabs:T5g5uaEPLwSiTUTRH1kiXGcS"
       script: 
         - "python3 -m augur.server &"
