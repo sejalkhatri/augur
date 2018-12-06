@@ -13,7 +13,7 @@ matrix:
         - "npm --version"
         - "node_modules/.bin/newman --version"
       install: 
-        - "pip install --process-dependency-links ."
+        - "pip install ."
         - "npm install newman"
       language: node_js
       node_js: 
