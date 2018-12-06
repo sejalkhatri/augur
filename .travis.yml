@@ -15,9 +15,8 @@ matrix:
       install: 
         - "pip install ."
         - "npm install newman"
-      language: node_js
-      node_js: 
-        - "8.2.1"
+      language: python
+      python: "3.6"
       notifications:
         slack: "augurlabs:T5g5uaEPLwSiTUTRH1kiXGcS"
       script: 
