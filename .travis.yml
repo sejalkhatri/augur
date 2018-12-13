@@ -8,12 +8,12 @@ matrix:
         slack: "augurlabs:T5g5uaEPLwSiTUTRH1kiXGcS"
       script: "python -m pytest augur/datasources/**/test_**.py"
 
-    - before_script: 
+    - name: "API Tests"
+      before_script: 
         - "node --version"
         - "npm --version"
         - "node_modules/.bin/newman --version"
       install: "pip install . && npm install newman"
-    - name: "API Tests"
       language: python
       python: "3.6"
       notifications:
