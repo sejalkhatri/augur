@@ -4,8 +4,8 @@ matrix:
       install: "pip install ."
       language: python
       python: "3.6"
-      notifications: 
-        slack: "augurlabs:T5g5uaEPLwSiTUTRH1kiXGcS"
+       notifications:
+          slack: augurlabs:yhIZQA6xu2nvlqUp3WW0t319
       script: "python -m pytest augur/datasources/**/test_**.py"
 
     - name: "API Tests"
@@ -16,8 +16,6 @@ matrix:
       install: "pip install . && npm install newman"
       language: python
       python: "3.6"
-      notifications:
-        slack: "augurlabs:T5g5uaEPLwSiTUTRH1kiXGcS"
       script: 
         - "python3 -m augur.server &"
         - "sleep 15"
