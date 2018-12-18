@@ -5,7 +5,7 @@ matrix:
       language: python
       python: "3.6"
        notifications:
-          slack: augurlabs:yhIZQA6xu2nvlqUp3WW0t319
+          slack: "augurlabs:yhIZQA6xu2nvlqUp3WW0t319"
       script: "python -m pytest augur/datasources/**/test_**.py"
 
     - name: "API Tests"
