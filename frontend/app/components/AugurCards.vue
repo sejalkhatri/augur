@@ -13,10 +13,6 @@
         </div>
         <downloaded-repos-card></downloaded-repos-card>
       </section>
-
-      <!-- <section class="unmaterialized">
-        <metrics-status-card></metrics-status-card>
-      </section> -->
     </div>
 
     <!-- content to show if app does have a repo to show -->
@@ -37,9 +33,6 @@
         <main-controls></main-controls>
         <div v-if="(baseRepo && (currentTab == 'gmd'))">
           <growth-maturity-decline-card></growth-maturity-decline-card>
-          <!-- <div id="comparisonCards" v-bind:class="{ hidden: !comparedRepos.length }" v-for="repo in comparedRepos">
-            <compared-repo-growth-maturity-decline-card :comparedTo="repo"></compared-repo-growth-maturity-decline-card>
-          </div> -->
         </div>
         <div v-if="(baseRepo && (currentTab == 'diversityInclusion'))">
           <diversity-inclusion-card></diversity-inclusion-card>
@@ -53,15 +46,9 @@
         <div v-if="(baseRepo && (currentTab == 'activity'))" id="activity">
           <base-repo-activity-card></base-repo-activity-card>
           <base-repo-ecosystem-card></base-repo-ecosystem-card>
-          <div id="comparisonCards" v-bind:class="{ hidden: !comparedRepos.length }" v-for="repo in comparedRepos">
-            <compared-repo-activity-card :comparedTo="repo"></compared-repo-activity-card>
-          </div>
         </div>
         <div v-if="(baseRepo && (currentTab == 'experimental'))">
           <experimental-card></experimental-card>
-          <div id="comparisonCards" v-bind:class="{ hidden: !comparedRepos.length }" v-for="repo in comparedRepos">
-            <compared-repo-experimental-card :comparedTo="repo"></compared-repo-experimental-card>
-          </div>
         </div>
         <div v-if="(gitRepo && (currentTab == 'git'))">
           <git-card></git-card>
@@ -110,33 +97,26 @@ module.exports = {
     DownloadedReposCard,
     LoginForm
   },
-  mounted() {
-    console.log("hiii!", this.$store.state.hasState,
-      this.tab,
-      this.repo,
-      this.owner,
-      this.comparedowner,
-      this.comparedrepo,
-      this.domain,
-      this.groupid)
-
-  },
   created() {
-    console.log("first")
-
     if(!this.groupid)
       this.mapGroup[1] = this.$store.state.comparedRepos
     if(this.repo){
-      if (this.domain)
+      console.log("domain:", this.domain, this.owner)
+      if (this.domain && this.owner){
+        console.log("if", this.owner, this.repo)
         this.$store.commit('setGitRepo', {
           gitURL: this.owner + '/' + this.repo,
           domain: this.domain
         })
+      }
       else{
-        console.log("ELSE")
+        console.log("ELSE", this.owner, this.repo)
+        let owner = this.owner ? this.owner : this.domain
+
         this.$store.commit('setRepo', {
-          githubURL: this.owner + '/' + this.repo
+          githubURL: owner + '/' + this.repo
         })
+
       }
       this.$store.commit('setTab', {
         tab: this.tab
@@ -147,7 +127,6 @@ module.exports = {
         })
       }
       if (localStorage.getItem('groupid')) {
-        console.log("OWNER",localStorage.getItem('owner'))
         if (localStorage.getItem('domain'))
           this.$store.commit('setGitRepo', {
             gitURL: localStorage.getItem('owner') + '/' + localStorage.getItem('repo'),
@@ -159,28 +138,20 @@ module.exports = {
           })
         }
         JSON.parse(localStorage.getItem('group')).forEach((repo) => {
-          console.log("REPO HERE", repo)
           this.$store.commit('addComparedRepo', {
             githubURL: repo
           })
         })
-        
       } 
-      
+      localStorage.clear()
     }
   },
   watch: {
     comparedRepos: function(){
       console.log(this.$store.state.comparedRepos.length, "second")
-      // if(comparedRepos.length > 1)
-      //   this.extra = true
-      // if (comparedRepos.length > 1){
-        console.log(this.groupid)
-        // this.mapGroup[1].push(this.$store.state.comparedRepos[this.$store.state.comparedRepos.length - 1])
-      // }
-      localStorage.setItem('group', JSON.stringify(this.$store.state.comparedRepos));
-      
-      if (this.domain)
+      console.log(this.groupid)
+      localStorage.setItem('group', JSON.stringify(this.$store.state.comparedRepos));  
+      if (this.gitRepo)
         localStorage.setItem('domain', this.domain)
       
       if(this.$store.state.comparedRepos.length > 1){
@@ -223,7 +194,7 @@ module.exports = {
     },
   },
   methods: {
-    collapseText (){
+    collapseText () {
       this.isCollapsed = !this.isCollapsed;
       if(!this.isCollapsed) {
         $(this.$el).find('.section').addClass('collapsed')
@@ -253,7 +224,7 @@ module.exports = {
           name: 'singlecompare',
           params: {tab: e.target.dataset['value'], domain: this.domain, owner: this.owner, repo: this.repo, comparedowner: this.comparedowner, comparedrepo: this.comparedrepo}
         })        
-      } else if (this.$store.state.comparedRepos.length > 1){
+      } else if (this.$store.state.comparedRepos.length > 1) {
         this.$router.push({
           name: 'group',
           params: {tab: e.target.dataset['value'], groupid: 1}

@@ -18,24 +18,25 @@ class FrontendStatusExtractor(object):
         self.endpoint_attributes = [attribute for attribute in self.attributes if attribute[0] == "Endpoint"]
         self.git_endpoint_attributes = [attribute for attribute in self.attributes if attribute[0] == "GitEndpoint"]
 
-    def determine_frontend_status(self, endpoint, metric_type):
+    def determine_frontend_status(self, metric):
         attribute = None
 
-        if metric_type is "timeseries":
-            attribute = next((attribute[1] for attribute in self.timeseries_attributes if attribute[2] in endpoint), None)
+        if metric.metric_type is "timeseries":
+            attribute = next((attribute for attribute in self.timeseries_attributes if f"/api/unstable/<owner>/<repo>/timeseries/{attribute[2]}" == metric.endpoint), None)
 
-        elif metric_type is "metric":
-            attribute = next((attribute[1] for attribute in self.endpoint_attributes if attribute[2] in endpoint), None)
+        elif metric.metric_type is "metric":
+            attribute = next((attribute for attribute in self.endpoint_attributes if f"/api/unstable/<owner>/<repo>/{attribute[2]}" == metric.endpoint), None)
 
-        elif metric_type is "git":
-            attribute = next((attribute[1] for attribute in self.git_endpoint_attributes if attribute[2] in endpoint), None)
+        elif metric.metric_type is "git":
+            attribute = next((attribute for attribute in self.git_endpoint_attributes if f"/api/unstable/git/{attribute[2]}" == metric.endpoint), None)
 
         if attribute is not None:
-            status = 'implemented'
+            metric.frontend_status = 'implemented'
+            metric.chart_mapping = attribute[1]
         else:
-            status = 'unimplemented'
+            metric.frontend_status = 'unimplemented'
 
-        return status
+        return metric
 
 class Metric(object):
 
@@ -46,6 +47,7 @@ class Metric(object):
         self.group = 'none'
         self.backend_status = 'unimplemented'
         self.frontend_status = 'unimplemented'
+        self.chart_mapping = "none"
         self.endpoint = 'none'
         self.data_source = 'none'
         self.metric_type = 'none'
@@ -80,34 +82,35 @@ class ImplementedMetric(Metric):
 
         if 'endpoint' in metadata:
             self.endpoint = metadata['endpoint']
-            self.frontend_status = frontend_status_extractor.determine_frontend_status(self.endpoint, self.metric_type)
+            self = frontend_status_extractor.determine_frontend_status(self)
+        # print(self.frontend_status)
 
 class MetricsStatus(object):
 
     diversity_inclusion_urls = [
-        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/blob/wg-gmd/goal_communication.md", "has_links": True},
-        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/blob/wg-gmd/goal_contribution.md", "has_links": True},
-        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/blob/wg-gmd/goal_events.md", "has_links": False},
-        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/blob/wg-gmd/goal_governance.md", "has_links": False},
-        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/blob/wg-gmd/goal_leadership.md", "has_links": False},
-        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/blob/wg-gmd/goal_project_places.md", "has_links": True},
-        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/blob/wg-gmd/goal_recognition.md", "has_links": False}
+        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/wg-gmd/goal_communication.md", "has_links": True},
+        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/wg-gmd/goal_contribution.md", "has_links": True},
+        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/wg-gmd/goal_events.md", "has_links": False},
+        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/wg-gmd/goal_governance.md", "has_links": False},
+        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/wg-gmd/goal_leadership.md", "has_links": False},
+        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/wg-gmd/goal_project_places.md", "has_links": True},
+        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/wg-gmd/goal_recognition.md", "has_links": False}
     ]   
 
     growth_maturity_decline_urls = [
-        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/blob/wg-gmd/2_Growth-Maturity-Decline.md", "has_links": True},
+        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/wg-gmd/2_Growth-Maturity-Decline.md", "has_links": True},
     ]
 
     risk_urls = [
-        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/blob/wg-gmd/3_Risk.md", "has_links": False},
+        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/wg-gmd/3_Risk.md", "has_links": False},
     ]
 
     value_urls = [
-        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/blob/wg-gmd/4_Value.md", "has_links": False},
+        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/wg-gmd/4_Value.md", "has_links": False},
     ]
 
     activity_urls = [
-        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/blob/wg-gmd/activity-metrics-list.md", "has_links": False},
+        {"raw_content_url": "https://raw.githubusercontent.com/augurlabs/metrics/wg-gmd/activity-metrics-list.md", "has_links": False},
     ]
 
     activity_repo = "augurlabs/metrics"
@@ -115,6 +118,7 @@ class MetricsStatus(object):
     def __init__(self, githubapi):
         self.__githubapi = githubapi.api
 
+        #TODO: don't hardcode this
         self.groups = {
             "diversity-inclusion": "Diversity and Inclusion",
             "growth-maturity-decline": "Growth, Maturity, and Decline",
@@ -123,7 +127,7 @@ class MetricsStatus(object):
             "activity": "Activity",
             "experimental": "Experimental",
             "all": "All"
-       },
+       }
 
         self.data_sources = []
         self.metric_types = []
@@ -200,12 +204,17 @@ class MetricsStatus(object):
         for raw_name in activity_names:
             metric = GroupedMetric(raw_name, "activity")
 
-            is_grouped_metric = True
-            for group in self.metrics_by_group:
-                if metric.tag not in [metric.tag for metric in group]:
-                    is_grouped_metric = False
+            tags = []
 
-            if not is_grouped_metric:
+            for group in self.metrics_by_group:
+                for metric in group:
+                    tags.append(metric.tag)
+
+                is_not_grouped_metric = False
+                if metric.tag in tags:
+                    is_not_grouped_metric = True
+
+            if is_not_grouped_metric:
                 activity_metrics.append(metric)
 
         return activity_metrics
@@ -223,7 +232,7 @@ class MetricsStatus(object):
         # I'm sorry
         implemented_metric_tags = [metric.tag for metric in self.implemented_metrics]
         for group in self.metrics_by_group:
-            if group is not self.experimental_metrics: #experimental metrics don't need to be copied, since they don't have a definition
+            if group is not self.experimental_metrics: #experime    ntal metrics don't need to be copied, since they don't have a definition
                 for grouped_metric in group:
                     if grouped_metric.tag in implemented_metric_tags:
                         metric = next(metric for metric in self.implemented_metrics if metric.tag == grouped_metric.tag)
