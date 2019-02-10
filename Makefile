@@ -48,11 +48,9 @@ default:
 # 
 #  Installation
 #
-install:
-	bash -c '$(CONDAUPDATE) $(CONDAACTIVATE) pip install --upgrade .'
-
 install-dev:
-	bash -c '$(CONDAUPDATE) $(CONDAACTIVATE) pip install pipreqs sphinx; sudo npm install -g apidoc brunch newman; pip install -e .; python -m ipykernel install --user --name augur --display-name "Python (augur)"; cd frontend/ && npm install'
+	@ bash util/install-scripts/install-dev.sh
+
 
 install-msr:
 	@ ./util/install-msr.sh
